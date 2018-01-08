@@ -6,10 +6,10 @@ succ(y, yz, 1, z).
 
 succ(z, zb, 10, b).
 
-hScore(a, 0).
-hScore(x, 11).
-hScore(y, 0).
-hScore(z, 0).
+hScore(a, 10).
+hScore(x, 8).
+hScore(y, 8).
+hScore(z, 6).
 hScore(b, 0).
 
 goal(b).
@@ -27,10 +27,22 @@ start_A_star( InitState, PathCost) :-
 
 search_A_star(Queue, ClosedSet, PathCost) :-
 
-	fetch(Node, Queue, ClosedSet , RestQueue),
+	fetch_list( Result, Queue, ClosedSet ),
+	write("Wybierz: "),write(Result), write("\n"),
+	read(Choice),
+	make_choice(Choice, Result, ClosedSet, PathCost ),
 
-	write(Queue), write("\n"),
 
+make_choice( 0, Result, [ Node | ClosedSet ], PathCost),
+	#cofnij krok
+	expand( NodeParent, NewNodes ),
+	delall ( Result, NewNodes, NewResult ),
+	search_A_star( NewResult, ClosedSet, PathCost ), !.
+
+
+make_choice( Choice, Result, ClosedSet , PathCost ) :-
+	fetch_choice(Choice, Queue, Node, RestQueue),
+	write(""), write( Node ), write("\n"),
 	continue(Node, RestQueue, ClosedSet, PathCost).
 
 
@@ -64,6 +76,38 @@ fetch(node(State, Action,Parent, Cost, Score),
 fetch(Node, [ _ |RestQueue], ClosedSet, NewRest) :-
 
 	fetch(Node, RestQueue, ClosedSet , NewRest).
+
+
+
+
+
+
+
+fetch_list([ node(State, Action,Parent, Cost, Score) | RestResult ] ,
+			[node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
+
+	\+ member(node(State, _ ,_  , _ , _ ) , ClosedSet),
+
+	fetch_list( RestResult, RestQueue, ClosedSet ).
+
+
+fetch_list( RestResult, [ _ |RestQueue], ClosedSet) :-
+
+	fetch_list( RestResult, RestQueue, ClosedSet).
+
+fetch_list( [] , [], ClosedSet).
+
+
+
+
+fetch_choice( 1, [H|T], H, T ) :- !.
+
+fetch_choice( N, [H | T], Node, [H | Rest] ) :-
+    NN is N - 1,
+    fetch_choice( NN, T, Node, Rest ).
+
+
+
 
 
 
@@ -126,7 +170,28 @@ build_path(node(EndState, _ , _ , _, _ ), Nodes, PartialPath, Path)  :-
 						[Action/EndState|PartialPath],Path) .
 
 
+
+
+
+delall( [X | Result], NewNodes, NewResult ) :-
+	del_ob(NewNodes, X, Rest),
+	delall( Result, Rest, NewResult ).
+
+delall( [], NewNodes, NewNodes ).
+
+
+del_ob([], X, []).
+
+del_ob([X|R],X,R).
+
+del_ob([Y|R],X,[Y|R1]):-
+    X\=Y,
+    del_ob(R,X,R1).
+
+
 del([X|R],X,R).
 del([Y|R],X,[Y|R1]) :-
 	X\=Y,
 	del(R,X,R1).
+
+
