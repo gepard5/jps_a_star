@@ -1,8 +1,8 @@
+:- include("jps-normal.pl").
+
 succ(nil, nil, 0, a).
 succ(a, ax, 1, x).
 succ(a, ay, 2, y).
-
-
 succ(x, xz, 1, z).
 succ(y, yz, 1, z).
 
@@ -30,9 +30,31 @@ start_A_star( InitState, PathCost) :-
 search_A_star(Queue, ClosedSet, PathCost) :-
 
 	fetch_list( Result, Queue, ClosedSet ),
-	write("Wybierz: "),write(Result), write("\n"),
+	write("Wybierz wezel(1-N): "),write(Result), write("\n"),
+	write("Cofnij krok (0)\n"),
+	write("Porownaj postepy (-1)\n"),
 	read(Choice),
 	make_choice(Choice, Result, ClosedSet, PathCost ).
+
+
+
+
+make_choice( -1, Result, [] , PathCost) :-
+	write("Nie ma czego porównać!\n"),
+	search_A_star(Result, [], PathCost).
+
+make_choice( -1, Result, ClosedSet , PathCost) :-
+	first(node( FState, Action, Parent, Cost, Score ), ClosedSet ),
+	last(node(LState, _, _, _, _), ClosedSet ),
+	std_start_A_star( LState, path_cost( STDPath, STDCost ), FState ),
+	build_path(node(Parent, _ ,_ , _ , _ ) , ClosedSet, [Action/FState], Path),
+	write("Standard A Star Path: "), write(STDPath), write("\n"),
+	write("Standard A Star Cost: "), write(STDCost), write("\n"),
+	write("Your Path: "), write(Path), write("\n"),
+	write("Your Cost: "), write(Cost), write("\n"),
+	show_compare_message( Cost, STDCost ),
+	search_A_star(Result, ClosedSet, PathCost).
+
 
 make_choice( 0, Result, [], PathCost) :-
 	write("Nie można cofnąć na pustym !\n"),
@@ -40,22 +62,31 @@ make_choice( 0, Result, [], PathCost) :-
 
 
 make_choice( 0, Result, [ Node | ClosedSet ], PathCost) :-
-	write("Cofnij krok\n"),
+	write("Cofanie kroku\n"),
 	expand( Node, NewNodes ),
-	write("NewNodes "), write(NewNodes), write("\n"),
 	delall( NewNodes, Result, NewResult ),
-	write("Delall "), write(NewResult), write("\n"),
-
 	get_parent( Node , Parent, ParentCost ),
-
 	insert_new_nodes([ Node ], NewResult, NewQueue),
 	search_A_star( NewQueue, ClosedSet, PathCost ).
 
 
 make_choice( Choice, Result, ClosedSet , PathCost ) :-
 	fetch_choice(Choice, Result, Node, RestQueue),
-	write("Node: "), write( Node ), write("\n"),
+	write("Rozwijanie wezla: "), write( Node ), write("\n"),
 	continue(Node, RestQueue, ClosedSet, PathCost).
+
+
+
+show_compare_message( Cost, STDCost ) :-
+	Cost > STDCost,
+	write("Twoja sciezka jest lepsza!\n").
+
+show_compare_message( Cost, STDCost ) :-
+	Cost < STDCost,
+	write("Standardowa sciezka jest lepsza!\n").
+
+show_compare_message( Cost, Cost ) :-
+	write("Sciezki są tej samej jakosci!\n").
 
 
 
@@ -65,7 +96,7 @@ get_parent( node( State, Action, Parent, Cost, Score ), Parent, ParentScore ) :-
 
 
 continue( [] , RestQueue, ClosedSet, PathCost ) :-
-	write("Choice wiekszy niz ilosc zmiennych!\n"),
+	write("Numer wiekszy niz ilosc wezlow!\n"),
 	search_A_star( RestQueue, ClosedSet, PathCost ).
 
 continue([ node(State, Action, Parent, Cost, _ ) | _ ] , _  ,  ClosedSet,
@@ -186,7 +217,7 @@ insert_p_queue(node(State, Action, Parent, Cost, FScore),  Queue,
 build_path(node(nil, _, _, _, _ ), _, Path, Path) :-    ! .
 
 build_path(node(EndState, _ , _ , _, _ ), Nodes, PartialPath, Path)  :-
-
+	
 	del(Nodes, node(EndState, Action, Parent , _ , _  ) , Nodes1) ,
 
 	build_path( node(Parent,_ ,_ , _ , _ ) , Nodes1,
@@ -216,5 +247,12 @@ del([X|R],X,R).
 del([Y|R],X,[Y|R1]) :-
 	X\=Y,
 	del(R,X,R1).
+
+
+last(X,[X]).
+last(X,[_|Z]) :- last(X,Z).
+
+first(X,[X | _]).
+
 
 
