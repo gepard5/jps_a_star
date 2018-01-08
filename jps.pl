@@ -1,5 +1,7 @@
+succ(nil, nil, 0, a).
 succ(a, ax, 1, x).
 succ(a, ay, 2, y).
+
 
 succ(x, xz, 1, z).
 succ(y, yz, 1, z).
@@ -30,24 +32,43 @@ search_A_star(Queue, ClosedSet, PathCost) :-
 	fetch_list( Result, Queue, ClosedSet ),
 	write("Wybierz: "),write(Result), write("\n"),
 	read(Choice),
-	make_choice(Choice, Result, ClosedSet, PathCost ),
+	make_choice(Choice, Result, ClosedSet, PathCost ).
+
+make_choice( 0, Result, [], PathCost) :-
+	write("Nie można cofnąć na pustym !\n"),
+	search_A_star( Result, [], PathCost ).
 
 
-make_choice( 0, Result, [ Node | ClosedSet ], PathCost),
-	#cofnij krok
-	expand( NodeParent, NewNodes ),
-	delall ( Result, NewNodes, NewResult ),
-	search_A_star( NewResult, ClosedSet, PathCost ), !.
+make_choice( 0, Result, [ Node | ClosedSet ], PathCost) :-
+	write("Cofnij krok\n"),
+	expand( Node, NewNodes ),
+	write("NewNodes "), write(NewNodes), write("\n"),
+	delall( NewNodes, Result, NewResult ),
+	write("Delall "), write(NewResult), write("\n"),
+
+	get_parent( Node , Parent, ParentCost ),
+
+	insert_new_nodes([ Node ], NewResult, NewQueue),
+	search_A_star( NewQueue, ClosedSet, PathCost ).
 
 
 make_choice( Choice, Result, ClosedSet , PathCost ) :-
-	fetch_choice(Choice, Queue, Node, RestQueue),
-	write(""), write( Node ), write("\n"),
+	fetch_choice(Choice, Result, Node, RestQueue),
+	write("Node: "), write( Node ), write("\n"),
 	continue(Node, RestQueue, ClosedSet, PathCost).
 
 
 
-continue(node(State, Action, Parent, Cost, _ ) , _  ,  ClosedSet,
+get_parent( node( State, Action, Parent, Cost, Score ), Parent, ParentScore ) :-
+	succ( Parent, Action, StepCost, State),
+	ParentScore is Cost - StepCost.
+
+
+continue( [] , RestQueue, ClosedSet, PathCost ) :-
+	write("Choice wiekszy niz ilosc zmiennych!\n"),
+	search_A_star( RestQueue, ClosedSet, PathCost ).
+
+continue([ node(State, Action, Parent, Cost, _ ) | _ ] , _  ,  ClosedSet,
 							path_cost(Path, Cost) ) :-
 
 	goal( State), ! ,
@@ -55,7 +76,7 @@ continue(node(State, Action, Parent, Cost, _ ) , _  ,  ClosedSet,
 	build_path(node(Parent, _ ,_ , _ , _ ) , ClosedSet, [Action/State], Path) .
 
 
-continue(Node, RestQueue, ClosedSet, Path)   :-
+continue([ Node | _ ], RestQueue, ClosedSet, Path)   :-
 
 	expand( Node, NewNodes),
 
@@ -99,10 +120,12 @@ fetch_list( [] , [], ClosedSet).
 
 
 
+fetch_choice( _, [], [], []) :- !.
 
-fetch_choice( 1, [H|T], H, T ) :- !.
+fetch_choice( 1, [H|T], [H], T ) :- !.
 
-fetch_choice( N, [H | T], Node, [H | Rest] ) :-
+fetch_choice( N, [H | T], Node
+, [H | Rest] ) :-
     NN is N - 1,
     fetch_choice( NN, T, Node, Rest ).
 
