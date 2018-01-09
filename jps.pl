@@ -42,22 +42,8 @@ make_choice( -1, Result, ClosedSet , PathCost) :-
 	show_compare_message( Cost, STDCost ),
 	search_A_star(Result, ClosedSet, PathCost).
 
-
-make_choice( 0, Result, [], PathCost) :-
-	write("Nie można cofnąć na pustym !\n"),
-	search_A_star( Result, [], PathCost ).
-
-
-make_choice( 0, Result, [ Node | ClosedSet ], PathCost) :-
-	write("Cofanie kroku\n"),
-	expand( Node, NewNodes ),
-	delall( NewNodes, Result, NewResult ),
-	get_parent( Node , Parent, ParentCost ),
-	insert_new_nodes([ Node ], NewResult, NewQueue),
-	search_A_star( NewQueue, ClosedSet, PathCost ).
-
-
 make_choice( Choice, Result, ClosedSet , PathCost ) :-
+    Choice > 0,
 	fetch_choice(Choice, Result, Node, RestQueue),
 	write("Rozwijanie wezla: "), write( Node ), write("\n"),
 	continue(Node, RestQueue, ClosedSet, PathCost).
@@ -111,12 +97,12 @@ continue([ Node | _ ], RestQueue, ClosedSet, Path)   :-
 fetch_list([ node(State, Action,Parent, Cost, Score) | RestResult ] ,
 			[node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
 	\+ member(node(State, _ ,_  , _ , _ ) , ClosedSet),
-	fetch_list( RestResult, RestQueue, ClosedSet ).
+	fetch_list( RestResult, RestQueue, ClosedSet ), !.
 
 fetch_list( RestResult, [ _ |RestQueue], ClosedSet) :-
-	fetch_list( RestResult, RestQueue, ClosedSet).
+	fetch_list( RestResult, RestQueue, ClosedSet), !.
 
-fetch_list( [] , [], ClosedSet).
+fetch_list( [] , [], ClosedSet) :- !.
 
 
 
@@ -124,7 +110,10 @@ fetch_list( [] , [], ClosedSet).
 
 fetch_choice( _, [], [], []) :- !.
 
-fetch_choice( 1, [H|T], [H], T ) :- !.
+fetch_choice( 1, [H|T], [H], T ).
+
+fetch_choice( 1, [H|T], Node, [H|Rest] ) :- 
+    fetch_choice(1, T, Node, Rest).
 
 fetch_choice( N, [H | T], Node
 , [H | Rest] ) :-
