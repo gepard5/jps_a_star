@@ -48,7 +48,7 @@ make_choice( -1, Result, AllNonMembers, ClosedSet , PathCost, ChoiceLength) :-
 make_choice( Choice, Result, AllNonMembers, ClosedSet , PathCost, ChoiceLength) :-
     Choice > 0,
 	fetch_choice(Choice, Result, Node, RestQueue),
-    delall( Node, AllNonMembers, RestNonMembers),
+    delall( [Node], AllNonMembers, RestNonMembers),
 	write("Rozwijanie wezla: "), write( Node ), write("\n"),
 	continue(Node, RestNonMembers, ClosedSet, PathCost, ChoiceLength).
 
@@ -79,17 +79,13 @@ get_parent( node( State, Action, Parent, Cost, Score ), Parent, ParentScore ) :-
 
 %continue
 
-continue( [] , RestQueue, ClosedSet, PathCost, ChoiceLength) :-
-	write("Numer wiekszy niz ilosc wezlow!\n"),
-	search_A_star( RestQueue, ClosedSet, PathCost, ChoiceLength).
-
-continue([ node(State, Action, Parent, Cost, _ ) | _ ] , _  ,  ClosedSet,
+continue(node(State, Action, Parent, Cost, _ ) , _  ,  ClosedSet,
 							path_cost(Path, Cost), ChoiceLength) :-
 	goal( State), ! ,
 	build_path(node(Parent, _ ,_ , _ , _ ) , ClosedSet, [Action/State], Path) .
 
 
-continue([ Node | _ ], RestQueue, ClosedSet, Path, ChoiceLength)   :-
+continue(Node, RestQueue, ClosedSet, Path, ChoiceLength)   :-
 	expand( Node, NewNodes),
 	insert_new_nodes(NewNodes, RestQueue, NewQueue),
 	search_A_star(NewQueue, [Node | ClosedSet ], Path, ChoiceLength).
@@ -117,9 +113,8 @@ fetch_list(N, RestResult, RestNonMembers, [ _ |RestQueue], ClosedSet) :-
 
 %fetch_choice
 
-fetch_choice( _, [], [], []) :- !.
 
-fetch_choice( 1, [H|T], [H], T ).
+fetch_choice( 1, [H|T], H, T ).
 
 fetch_choice( 1, [H|T], Node, [ H | Rest ] ) :-
     fetch_choice( 1, T, Node, Rest).
