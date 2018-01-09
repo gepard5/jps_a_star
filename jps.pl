@@ -5,32 +5,32 @@
 
 %start_A_star
 
-start_A_star( InitState, PathCost) :-
+start_A_star( InitState, PathCost, ChoiceLength) :-
 	score(InitState, 0, 0, InitCost, InitScore),
-	search_A_star( [node(InitState, nil, nil, InitCost , InitScore ) ], [ ], PathCost).
+	search_A_star( [node(InitState, nil, nil, InitCost , InitScore ) ], [ ], PathCost, ChoiceLength).
 
 
 
 %search_A_star
 
-search_A_star(Queue, ClosedSet, PathCost) :-
-	fetch_list( Result, Queue, ClosedSet ),
+search_A_star(Queue, ClosedSet, PathCost, ChoiceLength) :-
+	fetch_list(ChoiceLength, Result, AllNonMembers,  Queue, ClosedSet ),
     write("-----------------------------------------------\n"),
 	write("Wybierz wezel(1-N): "),write(Result), write("\n"),
 	write("Cofnij krok (0)\n"),
 	write("Porownaj postepy (-1)\n"),
 	read(Choice),
-	make_choice(Choice, Result, ClosedSet, PathCost ).
+	make_choice(Choice, Result, AllNonMembers, ClosedSet, PathCost, ChoiceLength).
 
 
 
 %make_choice 
 
-make_choice( -1, Result, [] , PathCost) :-
+make_choice( -1, Result, AllNonMembers, [] , PathCost, ChoiceLength) :-
 	write("Nie ma czego porównać!\n"),
-	search_A_star(Result, [], PathCost).
+	search_A_star(AllNonMembers, [], PathCost, ChoiceLength).
 
-make_choice( -1, Result, ClosedSet , PathCost) :-
+make_choice( -1, Result, AllNonMembers, ClosedSet , PathCost, ChoiceLength) :-
 	first(node( FState, Action, Parent, Cost, Score ), ClosedSet ),
 	last(node(LState, _, _, _, _), ClosedSet ),
 	std_start_A_star( LState, path_cost( STDPath, STDCost ), FState ),
@@ -40,27 +40,28 @@ make_choice( -1, Result, ClosedSet , PathCost) :-
 	write("Twoja sciezka: "), write(Path), write("\n"),
 	write("Twoj koszt: "), write(Cost), write("\n"),
 	show_compare_message( Cost, STDCost ),
-	search_A_star(Result, ClosedSet, PathCost).
+	search_A_star(AllNonMembers, ClosedSet, PathCost, ChoiceLength).
 
 
-make_choice( 0, Result, [], PathCost) :-
+make_choice( 0, Result, AllNonMembers, [], PathCost, ChoiceLength) :-
 	write("Nie można cofnąć na pustym !\n"),
-	search_A_star( Result, [], PathCost ).
+	search_A_star( AllNonMembers, [], PathCost ).
 
 
-make_choice( 0, Result, [ Node | ClosedSet ], PathCost) :-
+make_choice( 0, Result, AllNonMembers, [ Node | ClosedSet ], PathCost, ChoiceLength) :-
 	write("Cofanie kroku\n"),
 	expand( Node, NewNodes ),
-	delall( NewNodes, Result, NewResult ),
+	delall( NewNodes, AllNonMembers, NewResult ),
 	get_parent( Node , Parent, ParentCost ),
 	insert_new_nodes([ Node ], NewResult, NewQueue),
-	search_A_star( NewQueue, ClosedSet, PathCost ).
+	search_A_star( NewQueue, ClosedSet, PathCost, ChoiceLength).
 
 
-make_choice( Choice, Result, ClosedSet , PathCost ) :-
+make_choice( Choice, Result, AllNonMembers, ClosedSet , PathCost, ChoiceLength) :-
 	fetch_choice(Choice, Result, Node, RestQueue),
+    delall( Node, AllNonMembers, RestNonMembers),
 	write("Rozwijanie wezla: "), write( Node ), write("\n"),
-	continue(Node, RestQueue, ClosedSet, PathCost).
+	continue(Node, RestNonMembers, ClosedSet, PathCost, ChoiceLength).
 
 
 
@@ -89,35 +90,40 @@ get_parent( node( State, Action, Parent, Cost, Score ), Parent, ParentScore ) :-
 
 %continue
 
-continue( [] , RestQueue, ClosedSet, PathCost ) :-
+continue( [] , RestQueue, ClosedSet, PathCost, ChoiceLength) :-
 	write("Numer wiekszy niz ilosc wezlow!\n"),
-	search_A_star( RestQueue, ClosedSet, PathCost ).
+	search_A_star( RestQueue, ClosedSet, PathCost, ChoiceLength).
 
 continue([ node(State, Action, Parent, Cost, _ ) | _ ] , _  ,  ClosedSet,
-							path_cost(Path, Cost) ) :-
+							path_cost(Path, Cost), ChoiceLength) :-
 	goal( State), ! ,
 	build_path(node(Parent, _ ,_ , _ , _ ) , ClosedSet, [Action/State], Path) .
 
 
-continue([ Node | _ ], RestQueue, ClosedSet, Path)   :-
+continue([ Node | _ ], RestQueue, ClosedSet, Path, ChoiceLength)   :-
 	expand( Node, NewNodes),
 	insert_new_nodes(NewNodes, RestQueue, NewQueue),
-	search_A_star(NewQueue, [Node | ClosedSet ], Path).
+	search_A_star(NewQueue, [Node | ClosedSet ], Path, ChoiceLength).
 
 
 
 %fetch_list
 
-fetch_list([ node(State, Action,Parent, Cost, Score) | RestResult ] ,
-			[node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
+fetch_list(_, [], [], [], _).
+
+fetch_list(N, [ node(State, Action,Parent, Cost, Score) | RestResult ], [node(State, Action,Parent, Cost, Score)  | RestNonMembers], [node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
+    N > 0,	
+    \+ member(node(State, _ ,_  , _ , _ ) , ClosedSet),
+    NN is N - 1,
+	fetch_list(NN, RestResult, RestNonMembers, RestQueue, ClosedSet ).
+
+fetch_list(0, RestResult , [node(State, Action,Parent, Cost, Score)  | RestNonMembers], [node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
 	\+ member(node(State, _ ,_  , _ , _ ) , ClosedSet),
-	fetch_list( RestResult, RestQueue, ClosedSet ).
+	fetch_list(NN, RestResult, RestNonMembers, RestQueue, ClosedSet ).
 
-fetch_list( RestResult, [ _ |RestQueue], ClosedSet) :-
-	fetch_list( RestResult, RestQueue, ClosedSet).
 
-fetch_list( [] , [], ClosedSet).
-
+fetch_list(N, RestResult, RestNonMembers, [ _ |RestQueue], ClosedSet) :-
+	fetch_list(N, RestResult, RestNonMembers, RestQueue, ClosedSet).
 
 
 %fetch_choice
