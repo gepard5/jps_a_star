@@ -1,22 +1,5 @@
 :- include("jps-normal.pl").
-
-
-%FACTS
-
-succ(nil, nil, 0, a).
-succ(a, ax, 1, x).
-succ(a, ay, 2, y).
-succ(x, xz, 1, z).
-succ(y, yz, 1, z).
-succ(z, zb, 10, b).
-
-hScore(a, 10).
-hScore(x, 8).
-hScore(y, 8).
-hScore(z, 6).
-hScore(b, 0).
-
-goal(b).
+:- include("graph2.pl").
 
 
 
@@ -32,6 +15,7 @@ start_A_star( InitState, PathCost) :-
 
 search_A_star(Queue, ClosedSet, PathCost) :-
 	fetch_list( Result, Queue, ClosedSet ),
+    write("-----------------------------------------------\n"),
 	write("Wybierz wezel(1-N): "),write(Result), write("\n"),
 	write("Cofnij krok (0)\n"),
 	write("Porownaj postepy (-1)\n"),
@@ -83,12 +67,12 @@ make_choice( Choice, Result, ClosedSet , PathCost ) :-
 %show_compare_message
 
 show_compare_message( Cost, STDCost ) :-
-	Cost > STDCost,
+	Cost < STDCost,
 	write("Twoja sciezka jest lepsza!\n").
 
 show_compare_message( Cost, STDCost ) :-
-	Cost < STDCost,
-	write("Standardowa sciezka jest lepsza!\n").
+	Cost > STDCost,
+	write("Sciezka A star jest lepsza!\n").
 
 show_compare_message( Cost, Cost ) :-
 	write("Sciezki są tej samej jakosci!\n").
