@@ -47,7 +47,7 @@ make_choice( -1, Result, AllNonMembers, ClosedSet , PathCost, ChoiceLength) :-
 
 make_choice( Choice, Result, AllNonMembers, ClosedSet , PathCost, ChoiceLength) :-
     Choice > 0,
-	fetch_choice(Choice, Result, Node, RestQueue),
+	fetch_choice(Choice, Result, Node, RestQueue, Result),
     delall( [Node], AllNonMembers, RestNonMembers),
 	write("Rozwijanie wezla: "), write( Node ), write("\n"),
 	continue(Node, RestNonMembers, ClosedSet, PathCost, ChoiceLength).
@@ -114,15 +114,18 @@ fetch_list(N, RestResult, RestNonMembers, [ _ |RestQueue], ClosedSet) :-
 %fetch_choice
 
 
-fetch_choice( 1, [H|T], H, T ).
+fetch_choice( 1, [H|T], H, RestList, AllChoices ) :-
+    del(AllChoices, H, RestList).
 
-fetch_choice( 1, [H|T], Node, [ H | Rest ] ) :-
-    fetch_choice( 1, T, Node, Rest).
+fetch_choice( 1, List, Node, Rest, AllChoices ) :-
+    write("Wybierz kolejny wezel: \n"), write(AllChoices), write("\n"),
+    read(N),
+    fetch_choice( N, AllChoices, Node, Rest, AllChoices ).
 
 fetch_choice( N, [H | T], Node
-, [H | Rest] ) :-
+, Rest, AllChoices ) :-
     NN is N - 1,
-    fetch_choice( NN, T, Node, Rest ).
+    fetch_choice( NN, T, Node, Rest, AllChoices ).
 
 
 
