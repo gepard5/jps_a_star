@@ -6,8 +6,9 @@
 %fetch_permut(InputList, Order, ResultList)
 %If position put in Order list is incorrect for InputList (ex. exceeds %list size) then this fetch_permut() fails
 
+
+
 fetch_permut(_, [], []).
-fetch_permut([], _, []).
 
 fetch_permut(InputList, [N | Order], [NthElem|ResultList]) :-
 	fetch_Nth(InputList, N, NthElem),
