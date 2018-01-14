@@ -53,7 +53,7 @@ make_choice( Choice, Queue, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	fetch_permut(Result, NodePermut, Node),
 	continue(Node, ClosedSet, PathCost, ChoiceLength, PathLength).
 
-read_list([], [] ), !.
+read_list([], [] ) :- !.
 
 read_list([ A | B ] , [ Choice | NodePermut ] ) :-
 	read(Choice),
