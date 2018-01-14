@@ -33,7 +33,7 @@ make_choice( -1, Result, [] , PathCost, ChoiceLength, PathLength) :-
 	search_A_star(Result, PathCost, ChoiceLength, PathLength), !.
 
 make_choice( -1, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
-	first(node( FState, Action, Parent, Cost, Score ), ClosedSet ),
+	first(node( FState, Action, Parent, Cost, _ ), ClosedSet ),
 	last(node(LState, _, _, _, _), ClosedSet ),
 	std_start_A_star( LState, path_cost( STDPath, STDCost ), FState ),
 	build_path(node(Parent, _ ,_ , _ , _ ) , ClosedSet, [Action/FState], Path),
@@ -47,7 +47,6 @@ make_choice( -1, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 make_choice( Choice, Queue, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	PathLength > -1,
 	fetch_list(ChoiceLength, Result, NonusedQueue, Queue, ClosedSet ),
-	write("fetch_lsuit"), write(Result), write(NonusedQueue),
 	make_rest_choice( Choice, Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength).
 
 
@@ -55,10 +54,8 @@ make_rest_choice( Choice, Result, NonusedQueue, ClosedSet, PathCost, ChoiceLengt
 	write("Wezly: "), write(Result), write("\n"),
 	write("Podaj kolejnosc wywolan wezlow jako liste: "),
 	read_list(Result, NodePermut),
-	write("read+list"),
 	fetch_permut(Result, NodePermut, Node),
-	write("continue"),
-	continue(Node, ClosedSet, PathCost, ChoiceLength, PathLength), write("out").
+	continue(Node, ClosedSet, PathCost, ChoiceLength, PathLength).
 
 make_rest_choice( _, _, [], _, _, _, _) :- !, false.
 

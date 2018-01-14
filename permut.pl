@@ -18,6 +18,6 @@ fetch_permut(InputList, [_ | Order], NthElem) :-
 
 fetch_Nth([X | _], 1, X).
 
-fetch_Nth([X | InputList], N, NthElement) :-
+fetch_Nth([_ | InputList], N, NthElement) :-
     NN is N - 1,
     fetch_Nth(InputList, NN, NthElement).

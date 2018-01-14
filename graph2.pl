@@ -4,6 +4,7 @@ succ(nil, nil, 0, a).
 succ(a, ab, 1, b).
 succ(a, ac, 2, c).
 succ(a, ad, 3, d).
+succ(a, ai, 3, i).
 succ(b, be, 1, e).
 succ(c, ce, 2, e).
 succ(c, cg, 4, g).
@@ -21,6 +22,7 @@ hScore(e, 6).
 hScore(f, 5).
 hScore(g, 6).
 hScore(h, 0).
+hScore(i, 20).
 
 goal(h).
 
