@@ -46,14 +46,26 @@ make_choice( -1, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 
 make_choice( Choice, Queue, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	PathLength > -1,
-	fetch_list(ChoiceLength, Result,  Queue, ClosedSet ),
+	fetch_list(ChoiceLength, Result, NonusedQueue, Queue, ClosedSet ),
+	write("fetch_lsuit"), write(Result), write(NonusedQueue),
+	make_rest_choice( Choice, Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength).
+
+
+make_rest_choice( Choice, Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength ) :-
 	write("Wezly: "), write(Result), write("\n"),
 	write("Podaj kolejnosc wywolan wezlow jako liste: "),
 	read_list(Result, NodePermut),
+	write("read+list"),
 	fetch_permut(Result, NodePermut, Node),
-	continue(Node, ClosedSet, PathCost, ChoiceLength, PathLength).
+	write("continue"),
+	continue(Node, ClosedSet, PathCost, ChoiceLength, PathLength), write("out").
 
-read_list([], [] ), !.
+make_rest_choice( _, _, [], _, _, _, _) :- !, false.
+
+make_rest_choice( Choice, Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength ) :-
+	make_choice( Choice, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength ).
+
+read_list([], [] ):- !.
 
 read_list([ A | B ] , [ Choice | NodePermut ] ) :-
 	read(Choice),
@@ -103,16 +115,18 @@ continue(Node, ClosedSet, Path, ChoiceLength, PathLength)   :-
 
 %fetch_list
 
-fetch_list(_, [], [], _), !.
+fetch_list(_, [], [], [], _) :- !.
 
-fetch_list(N, [ node(State, Action,Parent, Cost, Score) | RestResult ], [node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
+fetch_list(0, [], RestQueue, RestQueue, _) :- !.
+
+fetch_list(N, [ node(State, Action,Parent, Cost, Score) | RestResult ], NonusedQueue, [node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
     N > 0,
     \+ member(node(State, _ ,_  , _ , _ ) , ClosedSet), !,
     NN is N - 1,
-	fetch_list(NN, RestResult, RestQueue, ClosedSet ).
+	fetch_list(NN, RestResult, NonusedQueue, RestQueue, ClosedSet ).
 
-fetch_list(N, RestResult, [ _ |RestQueue], ClosedSet) :-
-	fetch_list(N, RestResult, RestQueue, ClosedSet), !.
+fetch_list(N, RestResult, NonusedQueue, [ _ |RestQueue], ClosedSet) :-
+	fetch_list(N, RestResult, NonusedQueue, RestQueue, ClosedSet), !.
 
 
 %fetch_choice
