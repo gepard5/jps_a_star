@@ -20,18 +20,17 @@ start_A_star( InitState, PathCost, ChoiceLength, PathLength) :-
 %search_A_star
 
 search_A_star(Queue, ClosedSet, PathCost, ChoiceLength, PathLength) :-
-	fetch_list(ChoiceLength, Result,  Queue, ClosedSet ),
     write("-----------------------------------------------\n"),
 	write("Porownaj postepy (-1)\n"),
 	write("Wybierz kolejnosc wezlow: (1) \n"),
 	read(Choice),
-	make_choice(Choice, Result, ClosedSet, PathCost, ChoiceLength, PathLength).
+	make_choice(Choice, Queue, ClosedSet, PathCost, ChoiceLength, PathLength).
 
 %make_choice
 
-make_choice( -1, Result,[] , PathCost, ChoiceLength, PathLength) :-
+make_choice( -1, Result, [] , PathCost, ChoiceLength, PathLength) :-
 	write("Nie ma czego porównać!\n"),
-	search_A_star(Result, PathCost, ChoiceLength, PathLength).
+	search_A_star(Result, PathCost, ChoiceLength, PathLength), !.
 
 make_choice( -1, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	first(node( FState, Action, Parent, Cost, Score ), ClosedSet ),
@@ -43,17 +42,18 @@ make_choice( -1, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	write("Twoja sciezka: "), write(Path), write("\n"),
 	write("Twoj koszt: "), write(Cost), write("\n"),
 	show_compare_message( Cost, STDCost ),
-	search_A_star(Result, ClosedSet, PathCost, ChoiceLength, PathLength).
+	search_A_star(Result, ClosedSet, PathCost, ChoiceLength, PathLength), !.
 
-make_choice( Choice, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
+make_choice( Choice, Queue, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	PathLength > -1,
+	fetch_list(ChoiceLength, Result,  Queue, ClosedSet ),
 	write("Wezly: "), write(Result), write("\n"),
 	write("Podaj kolejnosc wywolan wezlow jako liste: "),
 	read_list(Result, NodePermut),
 	fetch_permut(Result, NodePermut, Node),
 	continue(Node, ClosedSet, PathCost, ChoiceLength, PathLength).
 
-read_list([], [] ).
+read_list([], [] ), !.
 
 read_list([ A | B ] , [ Choice | NodePermut ] ) :-
 	read(Choice),
@@ -64,14 +64,14 @@ read_list([ A | B ] , [ Choice | NodePermut ] ) :-
 
 show_compare_message( Cost, STDCost ) :-
 	Cost < STDCost,
-	write("Twoja sciezka jest lepsza!\n").
+	write("Twoja sciezka jest lepsza!\n"), !.
 
 show_compare_message( Cost, STDCost ) :-
 	Cost > STDCost,
-	write("Sciezka A star jest lepsza!\n").
+	write("Sciezka A star jest lepsza!\n"), !.
 
 show_compare_message( Cost, Cost ) :-
-	write("Sciezki są tej samej jakosci!\n").
+	write("Sciezki są tej samej jakosci!\n"), !.
 
 
 
@@ -79,7 +79,7 @@ show_compare_message( Cost, Cost ) :-
 
 get_parent( node( State, Action, Parent, Cost, Score ), Parent, ParentScore ) :-
 	succ( Parent, Action, StepCost, State),
-	ParentScore is Cost - StepCost.
+	ParentScore is Cost - StepCost, !.
 
 
 
@@ -96,14 +96,14 @@ continue(Node, ClosedSet, Path, ChoiceLength, PathLength)   :-
 	write("Rozwijanie wezla: "), write( Node ), write("\n"),
 	expand( Node, NewNodes),
 	insert_new_nodes(NewNodes, [], NewQueue),
-	NewPathLength is PathLength - 1,
+	NewPathLength is PathLength - 1, !,
 	search_A_star(NewQueue, [Node | ClosedSet ], Path, ChoiceLength, NewPathLength).
 
 
 
 %fetch_list
 
-fetch_list(_, [], [], _).
+fetch_list(_, [], [], _), !.
 
 fetch_list(N, [ node(State, Action,Parent, Cost, Score) | RestResult ], [node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
     N > 0,
@@ -112,7 +112,7 @@ fetch_list(N, [ node(State, Action,Parent, Cost, Score) | RestResult ], [node(St
 	fetch_list(NN, RestResult, RestQueue, ClosedSet ).
 
 fetch_list(N, RestResult, [ _ |RestQueue], ClosedSet) :-
-	fetch_list(N, RestResult, RestQueue, ClosedSet).
+	fetch_list(N, RestResult, RestQueue, ClosedSet), !.
 
 
 %fetch_choice
