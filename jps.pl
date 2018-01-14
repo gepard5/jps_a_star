@@ -1,68 +1,63 @@
 :- include("jps-normal.pl").
 :- include("graph2.pl").
+:- include("permut.pl").
 
 
 
 %start_A_star
 
-start_A_star( InitState, PathCost, ChoiceLength) :-
+start_A_star( InitState, PathCost, ChoiceLength, PathLength) :-
 	score(InitState, 0, 0, InitCost, InitScore),
-	search_A_star( [node(InitState, nil, nil, InitCost , InitScore ) ], [ ], PathCost, ChoiceLength).
+	write("Uruchamiam A* z maksymalnym krokiem: "), write(PathLength), write("\n"),
+	search_A_star( [node(InitState, nil, nil, InitCost , InitScore ) ], [ ], PathCost, ChoiceLength, PathLength).
+
+start_A_star( InitState, PathCost, ChoiceLength, PathLength) :-
+	NewPathLength is PathLength + 2,
+	start_A_star( InitState, PathCost, ChoiceLength, NewPathLength).
 
 
 
 %search_A_star
 
-search_A_star(Queue, ClosedSet, PathCost, ChoiceLength) :-
-	fetch_list(ChoiceLength, Result, AllNonMembers,  Queue, ClosedSet ),
+search_A_star(Queue, ClosedSet, PathCost, ChoiceLength, PathLength) :-
+	fetch_list(ChoiceLength, Result,  Queue, ClosedSet ),
     write("-----------------------------------------------\n"),
-	write("Wybierz wezel(1-N): "),write(Result), write("\n"),
-	write("Cofnij krok (0)\n"),
 	write("Porownaj postepy (-1)\n"),
+	write("Wybierz kolejnosc wezlow: (1) \n"),
 	read(Choice),
-	make_choice(Choice, Result, AllNonMembers, ClosedSet, PathCost, ChoiceLength).
+	make_choice(Choice, Result, ClosedSet, PathCost, ChoiceLength, PathLength).
 
+%make_choice
 
-
-%make_choice 
-
-make_choice( -1, Result, AllNonMembers, [] , PathCost, ChoiceLength) :-
+make_choice( -1, Result,[] , PathCost, ChoiceLength, PathLength) :-
 	write("Nie ma czego porównać!\n"),
-	search_A_star(AllNonMembers, [], PathCost, ChoiceLength).
+	search_A_star(Result, PathCost, ChoiceLength, PathLength).
 
-make_choice( -1, Result, AllNonMembers, ClosedSet , PathCost, ChoiceLength) :-
+make_choice( -1, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	first(node( FState, Action, Parent, Cost, Score ), ClosedSet ),
 	last(node(LState, _, _, _, _), ClosedSet ),
 	std_start_A_star( LState, path_cost( STDPath, STDCost ), FState ),
 	build_path(node(Parent, _ ,_ , _ , _ ) , ClosedSet, [Action/FState], Path),
-	write("Sciazka A Star: "), write(STDPath), write("\n"),
+	write("Sciezka A Star: "), write(STDPath), write("\n"),
 	write("Koszt A Star: "), write(STDCost), write("\n"),
 	write("Twoja sciezka: "), write(Path), write("\n"),
 	write("Twoj koszt: "), write(Cost), write("\n"),
 	show_compare_message( Cost, STDCost ),
-	search_A_star(AllNonMembers, ClosedSet, PathCost, ChoiceLength).
+	search_A_star(Result, ClosedSet, PathCost, ChoiceLength, PathLength).
 
+make_choice( Choice, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
+	PathLength > -1,
+	write("Wezly: "), write(Result), write("\n"),
+	write("Podaj kolejnosc wywolan wezlow jako liste: "),
+	read_list(Result, NodePermut),
+	fetch_permut(Result, NodePermut, Node),
+	continue(Node, ClosedSet, PathCost, ChoiceLength, PathLength).
 
-make_choice( 0, Result, AllNonMembers, [], PathCost, ChoiceLength) :-
-	write("Nie można cofnąć na pustym !\n"),
-	search_A_star( AllNonMembers, [], PathCost ).
+read_list([], [] ).
 
-
-make_choice( 0, Result, AllNonMembers, [ Node | ClosedSet ], PathCost, ChoiceLength) :-
-	write("Cofanie kroku\n"),
-	expand( Node, NewNodes ),
-	delall( NewNodes, AllNonMembers, NewResult ),
-	get_parent( Node , Parent, ParentCost ),
-	insert_new_nodes([ Node ], NewResult, NewQueue),
-	search_A_star( NewQueue, ClosedSet, PathCost, ChoiceLength).
-
-
-make_choice( Choice, Result, AllNonMembers, ClosedSet , PathCost, ChoiceLength) :-
-	fetch_choice(Choice, Result, Node, RestQueue),
-    delall( Node, AllNonMembers, RestNonMembers),
-	write("Rozwijanie wezla: "), write( Node ), write("\n"),
-	continue(Node, RestNonMembers, ClosedSet, PathCost, ChoiceLength).
-
+read_list([ A | B ] , [ Choice | NodePermut ] ) :-
+	read(Choice),
+	read_list(B, NodePermut).
 
 
 %show_compare_message
@@ -90,47 +85,44 @@ get_parent( node( State, Action, Parent, Cost, Score ), Parent, ParentScore ) :-
 
 %continue
 
-continue( [] , RestQueue, ClosedSet, PathCost, ChoiceLength) :-
-	write("Numer wiekszy niz ilosc wezlow!\n"),
-	search_A_star( RestQueue, ClosedSet, PathCost, ChoiceLength).
-
-continue([ node(State, Action, Parent, Cost, _ ) | _ ] , _  ,  ClosedSet,
-							path_cost(Path, Cost), ChoiceLength) :-
+continue(node(State, Action, Parent, Cost, _ ) , ClosedSet,
+							path_cost(Path, Cost), ChoiceLength, PathLength) :-
 	goal( State), ! ,
 	build_path(node(Parent, _ ,_ , _ , _ ) , ClosedSet, [Action/State], Path) .
 
 
-continue([ Node | _ ], RestQueue, ClosedSet, Path, ChoiceLength)   :-
+continue(Node, ClosedSet, Path, ChoiceLength, PathLength)   :-
+	PathLength > 0,
+	write("Rozwijanie wezla: "), write( Node ), write("\n"),
 	expand( Node, NewNodes),
-	insert_new_nodes(NewNodes, RestQueue, NewQueue),
-	search_A_star(NewQueue, [Node | ClosedSet ], Path, ChoiceLength).
+	insert_new_nodes(NewNodes, [], NewQueue),
+	NewPathLength is PathLength - 1,
+	search_A_star(NewQueue, [Node | ClosedSet ], Path, ChoiceLength, NewPathLength).
 
 
 
 %fetch_list
 
-fetch_list(_, [], [], [], _).
+fetch_list(_, [], [], _).
 
-fetch_list(N, [ node(State, Action,Parent, Cost, Score) | RestResult ], [node(State, Action,Parent, Cost, Score)  | RestNonMembers], [node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
-    N > 0,	
-    \+ member(node(State, _ ,_  , _ , _ ) , ClosedSet),
+fetch_list(N, [ node(State, Action,Parent, Cost, Score) | RestResult ], [node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
+    N > 0,
+    \+ member(node(State, _ ,_  , _ , _ ) , ClosedSet), !,
     NN is N - 1,
-	fetch_list(NN, RestResult, RestNonMembers, RestQueue, ClosedSet ).
+	fetch_list(NN, RestResult, RestQueue, ClosedSet ).
 
-fetch_list(0, RestResult , [node(State, Action,Parent, Cost, Score)  | RestNonMembers], [node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
-	\+ member(node(State, _ ,_  , _ , _ ) , ClosedSet),
-	fetch_list(NN, RestResult, RestNonMembers, RestQueue, ClosedSet ).
-
-
-fetch_list(N, RestResult, RestNonMembers, [ _ |RestQueue], ClosedSet) :-
-	fetch_list(N, RestResult, RestNonMembers, RestQueue, ClosedSet).
+fetch_list(N, RestResult, [ _ |RestQueue], ClosedSet) :-
+	fetch_list(N, RestResult, RestQueue, ClosedSet).
 
 
 %fetch_choice
 
 fetch_choice( _, [], [], []) :- !.
 
-fetch_choice( 1, [H|T], [H], T ) :- !.
+fetch_choice( 1, [H|T], H, T ).
+
+fetch_choice( 1, [H|T], Node, [ H |T ] ) :-
+	fetch_choice( 1, T, Node, Rest).
 
 fetch_choice( N, [H | T], Node
 , [H | Rest] ) :-

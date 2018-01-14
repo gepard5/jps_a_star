@@ -8,11 +8,11 @@
 
 
 
-fetch_permut(_, [], []).
+fetch_permut(InputList, [N | _], NthElem) :-
+	fetch_Nth(InputList, N, NthElem).
 
-fetch_permut(InputList, [N | Order], [NthElem|ResultList]) :-
-	fetch_Nth(InputList, N, NthElem),
-    fetch_permut(InputList, Order, ResultList).
+fetch_permut(InputList, [_ | Order], NthElem) :-
+    fetch_permut(InputList, Order, NthElem).
 
 
 
