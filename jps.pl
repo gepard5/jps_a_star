@@ -44,7 +44,7 @@ make_choice( -1, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	show_compare_message( Cost, STDCost ),
 	search_A_star(Result, ClosedSet, PathCost, ChoiceLength, PathLength), !.
 
-make_choice( Choice, Queue, ClosedSet , PathCost, ChoiceLength, PathLength) :-
+make_choice( 1, Queue, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	PathLength > -1,
 	fetch_list(ChoiceLength, Result,  Queue, ClosedSet ),
 	write("Wezly: "), write(Result), write("\n"),
