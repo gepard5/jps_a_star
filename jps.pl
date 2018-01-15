@@ -48,7 +48,7 @@ make_choice( 1, Queue, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	PathLength > -1,
 	fetch_list(ChoiceLength, Result,  Queue, ClosedSet ),
 	write("Wezly: "), write(Result), write("\n"),
-	write("Podaj kolejnosc wywolan wezlow jako liste: "),
+	write("Podaj kolejne numery wezlow: \n"),
 	read_list(Result, NodePermut),
 	fetch_permut(Result, NodePermut, Node),
 	continue(Node, ClosedSet, PathCost, ChoiceLength, PathLength).
@@ -103,7 +103,7 @@ continue(Node, ClosedSet, Path, ChoiceLength, PathLength)   :-
 
 %fetch_list
 
-fetch_list(_, [], [], _), !.
+fetch_list(_, [], [], _) :- !.
 
 fetch_list(N, [ node(State, Action,Parent, Cost, Score) | RestResult ], [node(State, Action,Parent, Cost, Score)  | RestQueue], ClosedSet) :-
     N > 0,
