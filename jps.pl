@@ -44,23 +44,26 @@ make_choice( -1, Result, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	show_compare_message( Cost, STDCost ),
 	search_A_star(Result, ClosedSet, PathCost, ChoiceLength, PathLength), !.
 
-make_choice( Choice, Queue, ClosedSet , PathCost, ChoiceLength, PathLength) :-
+make_choice( 1, Queue, ClosedSet , PathCost, ChoiceLength, PathLength) :-
 	PathLength > -1,
 	fetch_list(ChoiceLength, Result, NonusedQueue, Queue, ClosedSet ),
-	make_rest_choice( Choice, Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength).
+	make_rest_choice( Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength).
 
 
-make_rest_choice( Choice, Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength ) :-
+make_rest_choice( [], _, _, _, _, _) :-
+	write("Brak wezlow do wyswietlenia\n"), !, false.
+
+make_rest_choice( Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength ) :-
 	write("Wezly: "), write(Result), write("\n"),
-	write("Podaj kolejnosc wywolan wezlow jako liste: "),
+	write("Podaj kolejnosc wywolan wezlow jako liste: \n"),
 	read_list(Result, NodePermut),
 	fetch_permut(Result, NodePermut, Node),
 	continue(Node, ClosedSet, PathCost, ChoiceLength, PathLength).
 
-make_rest_choice( _, _, [], _, _, _, _) :- !, false.
+make_rest_choice( _, [], _, _, _, _) :- !, false.
 
-make_rest_choice( Choice, Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength ) :-
-	make_choice( Choice, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength ).
+make_rest_choice( Result, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength ) :-
+	make_choice( 1, NonusedQueue, ClosedSet, PathCost, ChoiceLength, PathLength ).
 
 read_list([], [] ):- !.
 
