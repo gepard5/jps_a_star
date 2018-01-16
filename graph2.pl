@@ -10,6 +10,7 @@ succ(c, ce, 2, e).
 succ(c, cg, 4, g).
 succ(d, df, 1, f).
 succ(d, dg, 2, g).
+succ(d, dj, 4, j).
 succ(e, eh, 10, h).
 succ(f, fh, 9, h).
 succ(g, gh, 5, h).
@@ -23,15 +24,16 @@ hScore(f, 5).
 hScore(g, 6).
 hScore(h, 0).
 hScore(i, 20).
+hScore(j, 20).
 
 goal(h).
 
 /**
-*		 a
+*		 a ______3_____ i
 *	   / | \
 *	  1  2   3	
 *	 /   |    \	
-*	b	 c 	   d
+*	b	 c 	   d_____4____ j
 *	|   / \   /|
 *	1  2   \ / 2
 *	| /    1 4 |
